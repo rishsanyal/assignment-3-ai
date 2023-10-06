@@ -54,9 +54,23 @@ def classify(model, list_of_tokens, apply_transformation=True) :
             # results[category] += log(model.get(category, {}).get(token, 0) + 1) - log(model[category].N() + len(model[category].keys()))
                 # results[category] += log(model[category].get(token, 0)/(len(model[category].keys()) +  len(model['neg'].keys())), 10)
             if token in model[category]:
-                results[category] += log(model[category].get(token, 0)/(len(model[category].keys())), 10)
+                results[category] += log(model[category].get(token, 0), 10)
 
     return results
+
+
+def setup_test_features(category, list_of_tokens, apply_transformation=True) :
+    return_list = []
+    if apply_transformation:
+        filtered_tokens = apply_transforms(transforms, select_features(filters, list_of_tokens))
+    else:
+        filtered_tokens = apply_transforms([], select_features([], list_of_tokens))
+
+    for token in filtered_tokens:
+        return_list.append(({category : token}, category))
+
+    return return_list
+
 
 def create_model(training_set):
     model_list = []
@@ -111,65 +125,8 @@ def question3():
         total += 1
     print(f'Accuracy without feature selection, without k-fold: {correct/total}')
 
-    #  Compare the performance of your classifier with and without feature
-    # selection on the movie_reviews data using five-fold cross-validation.
-
-    # kfold = KFold(n_splits=5, shuffle=True, random_state=42)
-
-    # incorrect, correct, total = 0, 0, 0
-
-    # kfold_accuracy_without_transformation = []
-    # kfold_accuracy_with_transformation = []
-
-    # for train_index, test_index in kfold.split(fileids):
-    #     test_set = [fileids[i] for i in test_index]
-    #     train_set = [fileids[i] for i in train_index]
-
-    #     tset = {'pos' : [item for item in train_set if item.startswith('pos')], 'neg' : [item for item in train_set if item.startswith('neg')]}
-    #     model = train(tset)
-    #     for fileid in test_set :
-    #         result = classify(model, movie_reviews.words(fileid))
-    #         true_val = fileid[0:3]
-    #         predicted = 'na'
-    #         if result['pos'] > result['neg'] :
-    #             predicted = 'pos'
-    #         else :
-    #             predicted = 'neg'
-    #         if predicted != true_val :
-    #             incorrect += 1
-    #         else:
-    #             correct += 1
-    #         total += 1
-    #     kfold_accuracy_with_transformation.append(correct/total)
-
-
-    # for train_index, test_index in kfold.split(fileids):
-    #     test_set = [fileids[i] for i in test_index]
-    #     train_set = [fileids[i] for i in train_index]
-
-    #     tset = {'pos' : [item for item in train_set if item.startswith('pos')], 'neg' : [item for item in train_set if item.startswith('neg')]}
-    #     model = train(tset, False)
-    #     for fileid in test_set :
-    #         result = classify(model, movie_reviews.words(fileid), False)
-    #         true_val = fileid[0:3]
-    #         predicted = 'na'
-    #         if result['pos'] > result['neg'] :
-    #             predicted = 'pos'
-    #         else :
-    #             predicted = 'neg'
-    #         if predicted != true_val :
-    #             incorrect += 1
-    #         else:
-    #             correct += 1
-    #         total += 1
-    #     kfold_accuracy_without_transformation.append(correct/total)
-
-    # print(f'Accuracy with feature selection, with k-fold: {sum(kfold_accuracy_with_transformation)/len(kfold_accuracy_with_transformation)}')
-    # print(f'Accuracy without feature selection, with k-fold: {sum(kfold_accuracy_without_transformation)/len(kfold_accuracy_without_transformation)}')
-
-
-
-    # compare this to the NLTK implementation of Naive Bayes using five-fold cross-validation.
+    # #  Compare the performance of your classifier with and without feature
+    # # selection on the movie_reviews data using five-fold cross-validation.
 
     kfold = KFold(n_splits=5, shuffle=True, random_state=42)
 
@@ -177,11 +134,11 @@ def question3():
     kfold_accuracy_with_transformation = []
 
     for train_split, test_split in kfold.split(fileids):
-        for train_split_num in train_split:
-            train_set = [fileids[i] for i in train_split]
-        for test_split_num in test_split:
-            test_set = [fileids[i] for i in test_split]
-
+        # for train_split_num in train_split:
+        train_set = [fileids[i] for i in train_split]
+        # for test_split_num in test_split:
+        test_set = [fileids[i] for i in test_split]
+        test_features = []
 
         tset = {'pos' : [], 'neg' : []}
 
@@ -191,7 +148,7 @@ def question3():
             else:
                 tset['neg'].append(train_set_file)
 
-        model, _ = train(tset)
+        model, total_words = train(tset)
 
         positive_features = []
 
@@ -203,21 +160,21 @@ def question3():
         for word, category in model['neg'].items():
             negative_features.append(({word: category}, 'neg'))
 
-        test_features = positive_features[0:100] + negative_features[0:100]
-        train_features = positive_features[100:] + negative_features[100:]
+        train_features = positive_features + negative_features
+
+        for test_split_file in test_set:
+            test_features.extend(setup_test_features(test_split_file[:3], movie_reviews.words(test_split_file)))
 
         classifier = NaiveBayesClassifier.train(train_features)
-
         kfold_accuracy_with_transformation.append(accuracy(classifier, test_features))
 
     print(f'Accuracy with feature selection: {sum(kfold_accuracy_with_transformation)/len(kfold_accuracy_with_transformation)}')
 
 
     for train_split, test_split in kfold.split(fileids):
-        for train_split_num in train_split:
-            train_set = [fileids[i] for i in train_split]
-        for test_split_num in test_split:
-            test_set = [fileids[i] for i in test_split]
+        train_set = [fileids[i] for i in train_split]
+        test_set = [fileids[i] for i in test_split]
+        test_features = []
 
         tset = {'pos' : [], 'neg' : []}
 
@@ -227,7 +184,7 @@ def question3():
             else:
                 tset['neg'].append(train_set_file)
 
-        model, total_words = train(tset, False)
+        model, _ = train(tset, False)
 
         positive_features = []
 
@@ -239,8 +196,11 @@ def question3():
         for word, category in model['neg'].items():
             negative_features.append(({word: category}, 'neg'))
 
-        test_features = positive_features[0:100] + negative_features[0:100]
-        train_features = positive_features[100:] + negative_features[100:]
+        # test_features = positive_features[0:100] + negative_features[0:100]
+        train_features = positive_features + negative_features
+
+        for test_split_file in test_set:
+            test_features.extend(setup_test_features(test_split_file[:3], movie_reviews.words(test_split_file), False))
 
         classifier = NaiveBayesClassifier.train(train_features)
         kfold_accuracy_without_transformation.append(accuracy(classifier, test_features))
