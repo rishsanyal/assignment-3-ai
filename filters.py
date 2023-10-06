@@ -5,11 +5,19 @@ from math import log
 from nltk.stem import WordNetLemmatizer
 from nltk.stem.porter import PorterStemmer
 from nltk.tokenize import word_tokenize
+from nltk import pos_tag
 
 import nltk
 words = set(nltk.corpus.words.words())
 
 eng_words = stopwords.words("english")
+
+ALLOWED_PART_OF_SPEECH = set([
+    'JJ', 'JJR', 'JJS',
+    'NN', 'NNS', 'NNP', 'NNPS',
+    'RB', 'RBR', 'RBS',
+    # 'VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ'
+])
 
 def alphabetic(token) :
     try :
@@ -33,7 +41,11 @@ def is_grammer(token):
         'i', 'A', 'a', 'The', 'the'
     ])
 
-filters = [alphabetic,stopword, is_empty, is_small, is_grammer]
+def is_allowed_part_of_speech(token):
+    return pos_tag([token])[0][1] in ALLOWED_PART_OF_SPEECH
+
+
+filters = [alphabetic,stopword, is_empty, is_small, is_grammer, is_allowed_part_of_speech]
 
 
 def trim(token) :
@@ -97,7 +109,6 @@ def apply_transforms(transforms, list_of_tokens) :
     return changed
 
 transforms = [trim, lowercase, apply_stemmer, apply_lemmatizer]
-# transforms = [trim, lowercase]
 
 
 

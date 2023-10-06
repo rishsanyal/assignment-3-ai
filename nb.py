@@ -9,6 +9,9 @@ from nltk.classify.util import accuracy
 
 from sklearn.model_selection import KFold
 
+transforms = [trim, lowercase, apply_stemmer, apply_lemmatizer]
+filters = [alphabetic, stopword, is_empty, is_small, is_grammer, is_allowed_part_of_speech]
+
 
 ## assume the training set is:
 ## a dictionary mapping category names to lists of files.
@@ -47,7 +50,6 @@ def classify(model, list_of_tokens, apply_transformation=True) :
     categories = list(model.keys())
     results = {}
 
-    ## TODO: Check what log likelihood is and how to calculate it
     for category in categories:
         results[category] = 0
         for token in filtered_tokens:
@@ -89,7 +91,7 @@ def question3():
     tset = {'pos' : pos, 'neg' : neg}
 
 
-    model, total_words = train(tset)
+    model, _ = train(tset)
     incorrect, correct, total = 0, 0, 0
 
     for fileid in fileids :
@@ -108,7 +110,7 @@ def question3():
     print(f'Accuracy with feature selection, without k-fold: {correct/total}')
 
     apply_transformation = False
-    model, total_words = train(tset, apply_transformation)
+    model, _ = train(tset, apply_transformation)
     incorrect, correct, total = 0, 0, 0
     for fileid in fileids :
         result = classify(model, movie_reviews.words(fileid), apply_transformation)
@@ -150,13 +152,13 @@ def question3():
 
         positive_features = []
 
-        for word, category in model['pos'].items():
-            positive_features.append(({word: category}, 'pos'))
+        for word, word_count in model['pos'].items():
+            positive_features.append(({word: word_count}, 'pos'))
 
         negative_features = []
 
-        for word, category in model['neg'].items():
-            negative_features.append(({word: category}, 'neg'))
+        for word, word_count in model['neg'].items():
+            negative_features.append(({word: word_count}, 'neg'))
 
         train_features = positive_features + negative_features
 
@@ -204,6 +206,5 @@ def question3():
 
     print(f'Accuracy without feature selection: {sum(kfold_accuracy_without_transformation)/len(kfold_accuracy_without_transformation)}')
 
-## You will need to extend this to do five-fold cross-validation, and also compute accuracy.
 if __name__ == "__main__" :
     question3()
