@@ -24,7 +24,7 @@ def is_empty(token) :
     return token != ''
 
 def is_small(token) :
-    return len(token) > 3
+    return len(token) > 2
 
 def is_grammer(token):
     return token not in set([
@@ -96,7 +96,7 @@ def apply_transforms(transforms, list_of_tokens) :
         changed.append(new_token)
     return changed
 
-transforms = [trim, lowercase, tokenize]
+transforms = [trim, lowercase, apply_stemmer, apply_lemmatizer]
 # transforms = [trim, lowercase]
 
 

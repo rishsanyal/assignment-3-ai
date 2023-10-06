@@ -5,4 +5,4 @@ from chunking import question4
 
 if __name__ == '__main__':
     question3()
-    question4()
+    # question4()

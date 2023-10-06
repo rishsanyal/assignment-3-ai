@@ -128,15 +128,13 @@ def question3():
     # #  Compare the performance of your classifier with and without feature
     # # selection on the movie_reviews data using five-fold cross-validation.
 
-    kfold = KFold(n_splits=5, shuffle=True, random_state=42)
+    kfold = KFold(n_splits=5, shuffle=True)
 
     kfold_accuracy_without_transformation = []
     kfold_accuracy_with_transformation = []
 
     for train_split, test_split in kfold.split(fileids):
-        # for train_split_num in train_split:
         train_set = [fileids[i] for i in train_split]
-        # for test_split_num in test_split:
         test_set = [fileids[i] for i in test_split]
         test_features = []
 
@@ -196,7 +194,6 @@ def question3():
         for word, category in model['neg'].items():
             negative_features.append(({word: category}, 'neg'))
 
-        # test_features = positive_features[0:100] + negative_features[0:100]
         train_features = positive_features + negative_features
 
         for test_split_file in test_set:
